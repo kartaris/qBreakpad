@@ -1,0 +1,77 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build_linux:
+    name: Build for Linux
+    runs-on: ubuntu-18.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@master
+        with:
+          submodules: recursive
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: 5.15.2
+          target: desktop
+
+      - name: Run QMake
+        shell: bash
+        run: |
+          mkdir build
+          cd build
+          qmake ../qBreakpad.pro
+      - name: Build
+        shell: bash
+        run: |
+          cd build
+          make -j$(nproc)
+      - name: Run Tests
+        shell: bash
+        run: |
+          cd build
+          make check
+
+  build_windows:
+    name: Build for Windows
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@master
+        with:
+          submodules: recursive
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: 5.15.2
+          arch: win64_msvc2019_64
+          target: desktop
+          
+      - name: Configure MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Run QMake
+        run: |
+          mkdir build
+          cd build
+          qmake ../qBreakpad.pro
+
+      - name: Build
+        run: |
+          cd build
+          nmake
+
+        # nmake check causes errors because of `cd /d` in generated Makefile
+        # changing shell doesn't help
+      - name: Run Tests
+        shell: cmd
+        working-directory: .\build\tests\testsRunner\
+        run: testsRunner

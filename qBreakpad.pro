@@ -1,3 +1,3 @@
-CONFIG += ordered
 TEMPLATE = subdirs
+CONFIG += ordered
 SUBDIRS += handler demo tests
